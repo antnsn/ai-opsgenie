@@ -1,8 +1,9 @@
-from flask import Flask, request, jsonify
+from flask import Flask, request, jsonify, abort
 import openai
 import os
 import requests
 import logging
+import functools
 
 app = Flask(__name__)
 
@@ -15,15 +16,27 @@ if not openai_api_key:
     logging.error("OPENAI_API_KEY is not set.")
     exit(1)
 
-openai_url = os.getenv('OPENAI_URL', 'https://api.openai.com/v1/engines/davinci/completions')
 opsgenie_api_key = os.getenv('OPSGENIE_API_KEY')
 if not opsgenie_api_key:
     logging.error("OPSGENIE_API_KEY is not set.")
     exit(1)
 
-opsgenie_url = os.getenv('OPSGENIE_URL', 'https://api.opsgenie.com/v2/alerts')
+webhook_api_key = os.getenv('WEBHOOK_API_KEY')
+if not webhook_api_key:
+    logging.error("WEBHOOK_API_KEY is not set.")
+    exit(1)
+
+def require_api_key(view_function):
+    @functools.wraps(view_function)
+    def decorated_function(*args, **kwargs):
+        if request.headers.get('X-API-Key') and request.headers.get('X-API-Key') == webhook_api_key:
+            return view_function(*args, **kwargs)
+        else:
+            abort(401)  # Unauthorized
+    return decorated_function
 
 @app.route('/webhook', methods=['POST'])
+@require_api_key
 def handle_webhook():
     data = request.json
     if not data or 'message' not in data:
@@ -68,6 +81,10 @@ def send_to_opsgenie(data, explanation):
     except requests.RequestException as e:
         logging.error(f"Failed to send data to Opsgenie: {str(e)}")
         raise
+
+@app.route('/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "healthy"}), 200
 
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')

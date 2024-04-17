@@ -15,6 +15,7 @@ ENV OPENAI_API_KEY=""
 ENV OPENAI_URL=""
 ENV OPSGENIE_API_KEY=""
 ENV OPSGENIE-URL=""
+ENV WEBHOOK_API_KEY=""
 # Make port 5000 available to the world outside this container
 EXPOSE 5000
 
