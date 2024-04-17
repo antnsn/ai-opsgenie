@@ -4,9 +4,9 @@ metadata:
   name: webhook-translator-ingress
   namespace: webhook-test
   annotations:
-    #cert-manager.io/cluster-issuer: letsencrypt
-    #nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
-    #nginx.ingress.kubernetes.io/rewrite-target: /   
+    cert-manager.io/cluster-issuer: letsencrypt
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
+    nginx.ingress.kubernetes.io/rewrite-target: /   
   labels:
     app: webhook
 spec:
