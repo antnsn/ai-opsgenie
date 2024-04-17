@@ -1,5 +1,7 @@
 from flask import Flask, request, jsonify, abort
-import openai
+from openai import OpenAI
+
+client = OpenAI()
 import os
 import requests
 import logging
@@ -74,13 +76,11 @@ def get_structured_data(data):
 
         Please format your response as a JSON object.
         """
-        response = openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": "system", "content": "Please generate structured data based on the description."},
-                      {"role": "user", "content": prompt_text}],
-        )
-        structured_response = response['choices'][0]['message']['content'].strip()
-        
+        response = client.chat.completions.create(model="gpt-3.5-turbo",
+        messages=[{"role": "system", "content": "Please generate structured data based on the description."},
+                  {"role": "user", "content": prompt_text}])
+        structured_response = response.choices[0].message.content.strip()
+
         return json.loads(structured_response)
 
     except json.JSONDecodeError as e:
