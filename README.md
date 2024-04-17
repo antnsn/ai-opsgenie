@@ -53,10 +53,6 @@ To deploy this on a live Kubernetes system, use the Kubernetes manifest provided
    kubectl apply -f deployment.yaml
    ```
 
-
-### Additional Information
-
-```markdown
 ### Built With
 
 - [Flask](http://flask.pocoo.org/) - The web framework used
