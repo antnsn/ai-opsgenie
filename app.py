@@ -59,7 +59,7 @@ def handle_webhook():
 
 def get_structured_data(data):
     try:
-        description = data['message']  # Assuming 'message' contains the incident description
+        description = data['message']
         prompt_text = f"""
         Based on the following description, fill out the structured data:
 
@@ -74,28 +74,23 @@ def get_structured_data(data):
 
         Please format your response as a JSON object.
         """
-        response = openai.Completion.create(
-            engine="davinci",
-            prompt=prompt_text,
-            max_tokens=250,  # Increased tokens for more detailed output
-            temperature=0.3,
-            top_p=1.0,
-            n=1,
-            stop=None,
-            api_key=openai_api_key
+        response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[{"role": "system", "content": "Please generate structured data based on the description."},
+                      {"role": "user", "content": prompt_text}],
         )
-        structured_response = response.choices[0].text.strip()
+        structured_response = response['choices'][0]['message']['content'].strip()
         
-        # Attempt to parse the JSON response
         return json.loads(structured_response)
 
     except json.JSONDecodeError as e:
         logging.error(f"Failed to parse JSON from OpenAI: {str(e)}")
-        raise ValueError("Received malformed JSON from OpenAI.")  # Raising a more specific error after logging
+        raise ValueError("Received malformed JSON from OpenAI.")
 
     except Exception as e:
         logging.error(f"Failed to generate structured data from OpenAI: {str(e)}")
-        raise  # Propagate exception after logging
+        raise
+
 
 def send_to_opsgenie(data):
     headers = {
