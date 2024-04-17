@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: webhook-translator
-        image: webhook-translator:latest
+        image: antnsn/openai-opsgenie:latest
         ports:
         - containerPort: 5000
         env:
