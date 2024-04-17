@@ -3,7 +3,9 @@ name: Docker Publish
 on:
   push:
     branches:
-      - main  # Replace with your main branch name
+      - main  
+    paths-ignore:
+      - 'manifest/**'      
   workflow_dispatch:      
 
 jobs:
@@ -26,5 +28,5 @@ jobs:
           docker buildx build --tag "${{ secrets.DOCKERHUB_USERNAME }}"/openai-opsgenie:latest --push .
         env:
           DOCKER_CLI_ACI: 1
-        working-directory: ./  # Replace with the actual path
+        working-directory: ./ 
 
