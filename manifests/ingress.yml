@@ -1,0 +1,17 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: webhook-translator-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+spec:
+  rules:
+  - http:
+      paths:
+      - path: /webhook
+        pathType: ImplementationSpecific
+        backend:
+          service:
+            name: webhook-translator-service
+            port:
+              number: 80
