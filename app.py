@@ -21,6 +21,9 @@ if not opsgenie_api_key:
     logging.error("OPSGENIE_API_KEY is not set.")
     exit(1)
 
+opsgenie_url = os.getenv('OPSGENIE_URL', 'https://api.opsgenie.com/v2/alerts')
+
+
 webhook_api_key = os.getenv('WEBHOOK_API_KEY')
 if not webhook_api_key:
     logging.error("WEBHOOK_API_KEY is not set.")
@@ -44,43 +47,69 @@ def handle_webhook():
         return jsonify({"status": "error", "message": "Invalid data"}), 400
 
     try:
-        explanation = get_explanation(data)
-        response = send_to_opsgenie(data, explanation)
-        return jsonify({"status": "success", "opsgenie_response": response}), 200
+        structured_data = get_structured_data(data)
+        # Optionally send structured data to Opsgenie or handle it as needed
+        # response = send_to_opsgenie(data, structured_data)
+        # For now, let's just return the structured data for inspection
+        return jsonify({"status": "success", "data": structured_data}), 200
     except Exception as e:
         logging.error(f"An error occurred: {str(e)}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
-def get_explanation(data):
+def get_structured_data(data):
     try:
+        description = data['message']  # Assuming 'message' contains the incident description
+        prompt_text = f"""
+        Based on the following description, fill out the structured data:
+
+        Description: {description}
+
+        Fill in the following fields:
+        Source:
+        Tags: []
+        Details: {{}}
+        Entity:
+        Priority:
+
+        Please format your response as a JSON object.
+        """
         response = openai.Completion.create(
             engine="davinci",
-            prompt=f"Explain this message: {data['message']}",
-            max_tokens=60,
+            prompt=prompt_text,
+            max_tokens=250,  # Increased tokens for more detailed output
+            temperature=0.3,
+            top_p=1.0,
+            n=1,
+            stop=None,
             api_key=openai_api_key
         )
-        return response.choices[0].text.strip()
-    except Exception as e:
-        logging.error(f"Failed to get explanation from OpenAI: {str(e)}")
-        raise
+        structured_response = response.choices[0].text.strip()
+        
+        # Attempt to parse the JSON response
+        return json.loads(structured_response)
 
-def send_to_opsgenie(data, explanation):
+    except json.JSONDecodeError as e:
+        logging.error(f"Failed to parse JSON from OpenAI: {str(e)}")
+        raise ValueError("Received malformed JSON from OpenAI.")  # Raising a more specific error after logging
+
+    except Exception as e:
+        logging.error(f"Failed to generate structured data from OpenAI: {str(e)}")
+        raise  # Propagate exception after logging
+
+def send_to_opsgenie(data):
     headers = {
         "Authorization": f"GenieKey {opsgenie_api_key}",
         "Content-Type": "application/json"
     }
-    body = {
-        "message": data['message'],
-        "description": explanation,
-        "priority": "P1"  # example priority
-    }
+    # Assuming 'data' is already a structured dictionary fitting Opsgenie's API
     try:
-        response = requests.post(opsgenie_url, json=body, headers=headers)
+        response = requests.post(opsgenie_url, json=data, headers=headers)
         response.raise_for_status()
         return response.json()
     except requests.RequestException as e:
-        logging.error(f"Failed to send data to Opsgenie: {str(e)}")
+        logging.error(f"Failed to send structured data to Opsgenie: {str(e)}")
         raise
+
 
 @app.route('/health', methods=['GET'])
 def health_check():
