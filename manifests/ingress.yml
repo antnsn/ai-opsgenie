@@ -7,6 +7,11 @@ metadata:
     #cert-manager.io/cluster-issuer: letsencrypt
     #nginx.ingress.kubernetes.io/force-ssl-redirect: "false"
     #nginx.ingress.kubernetes.io/rewrite-target: /
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header X-Api-Key $api_key;
+      if ($http_x_api_key != $api_key) {
+        return 401 "Unauthorized: API key is invalid.";
+      }    
   labels:
     app: webhook
 spec:
