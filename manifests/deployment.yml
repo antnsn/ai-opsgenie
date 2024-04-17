@@ -35,6 +35,11 @@ spec:
               key: api_key
         - name: OPSGENIE_URL
           value: "https://api.opsgenie.com/v2/alerts"
+        - name: WEBHOOK_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: webhook-secret
+              key: api_key
         resources:
           requests:
             cpu: "250m"
